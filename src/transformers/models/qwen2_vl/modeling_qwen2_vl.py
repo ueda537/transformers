@@ -1591,11 +1591,16 @@ class Qwen2VLForConditionalGeneration(Qwen2VLPreTrainedModel):
             inputs_embeds = self.model.embed_tokens(input_ids)
             if pixel_values is not None:
                 pixel_values = pixel_values.type(self.visual.get_dtype())
-                image_embeds = self.visual(pixel_values, grid_thw=image_grid_thw).to(inputs_embeds.device)
-                image_mask = input_ids == self.config.image_token_id
+                image_embeds = self.visual(pixel_values, grid_thw=image_grid_thw).to(inputs_embeds.device)  # (seq, hid)
+                image_mask = input_ids == self.config.image_token_id  # (b, seq)
                 if self.training:
                     inputs_embeds = inputs_embeds.clone()
                 inputs_embeds[image_mask] = image_embeds
+            else:
+                pixel_values = torch.zeros((6612, 1176), dtype=self.visual.get_dtype()).to(self.visual.get_device())
+                image_grid_thw = torch.as_tensor([[1, 58, 114]]).to(self.visual.get_device())
+                image_embeds = self.visual(pixel_values, grid_thw=image_grid_thw).to(inputs_embeds.device)  # (seq, hid)
+                inputs_embeds += image_embeds.sum() * 0.0
             if pixel_values_videos is not None:
                 pixel_values_videos = pixel_values_videos.type(self.visual.get_dtype())
                 video_embeds = self.visual(pixel_values_videos, grid_thw=video_grid_thw).to(inputs_embeds.device)
