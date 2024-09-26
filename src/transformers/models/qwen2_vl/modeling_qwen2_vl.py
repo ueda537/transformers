@@ -1692,7 +1692,7 @@ class Qwen2VLForConditionalGeneration(Qwen2VLPreTrainedModel, GenerationMixin):
                 image_mask = (input_ids == self.config.image_token_id).unsqueeze(-1).expand_as(inputs_embeds)
                 image_embeds = image_embeds.to(inputs_embeds.device, inputs_embeds.dtype)
                 inputs_embeds = inputs_embeds.masked_scatter(image_mask, image_embeds)
-            else:
+            elif labels is not None:  # training
                 pixel_values = torch.zeros((6612, 1176), dtype=self.visual.get_dtype()).to(self.visual.get_device())
                 image_grid_thw = torch.as_tensor([[1, 58, 114]]).to(self.visual.get_device())
                 image_embeds = self.visual(pixel_values, grid_thw=image_grid_thw).to(inputs_embeds.device)  # (seq, hid)
